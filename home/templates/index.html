@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real-Time Location Tracking</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      height: calc(100vh - 50px);
+      /* Viewport height minus 50px niche ke liye */
+      width: 100vw;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Real Time Location Tracking</h1>
+  <div id="map"></div>
+
+  <script>
+    // ✅ Define initMap in global scope
+    window.initMap = function () {
+      const initialLocation = { lat: 37.7749, lng: -122.4194 };
+
+      const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 15,
+        center: initialLocation,
+        restriction: {
+          latLngBounds: {
+            north: 20.0,
+            south: 18.0,
+            east: 73.9,
+            west: 72.7,
+          },
+          strictBounds: false,
+        },
+      });
+
+      // Custom vehicle icon (like Zomato's delivery boy vehicle icon)
+      const vehicleIcon = {
+        url: 'https://cdn-icons-png.flaticon.com/512/16422/16422519.png', // Replace with your vehicle image URL
+        scaledSize: new google.maps.Size(50, 50), // Adjust size of the vehicle icon
+      };
+
+      const marker = new google.maps.Marker({
+        position: initialLocation,
+        map: map,
+        title: "Delivery Boy Location",
+        icon: vehicleIcon, // Custom vehicle icon
+      });
+
+      function updateLocation() {
+        fetch("/data/")  // Assuming /data/ returns updated location data from Kafka
+          .then((response) => response.json())
+          .then((data) => {
+            const newLocation = {
+              lat: data.latitude,
+              lng: data.longitude,
+            };
+            marker.setPosition(newLocation);
+            map.setCenter(newLocation);
+          })
+          .catch((error) =>
+            console.error("Error fetching location data:", error)
+          );
+
+        setTimeout(updateLocation, 5000); // Repeat every 5 sec
+      }
+
+      updateLocation(); // Start updates
+    };
+  </script>
+
+  <!-- ✅ Load Maps API with async/defer and correct callback -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD7RXOMmFqyRTeEHoGXP0BdCIwzEN7V4bY&callback=initMap"
+    async defer></script>
+</body>
+
+</html>
